@@ -15,3 +15,5 @@ The app employs a range of tricks to reduce battery usage but it's still drainin
 You'll have to check your device to see how it affects your battery.
 
 Battery drain is comparable to having constant audio playback.
+
+<b>Legal notice:</b> Recording laws vary by jurisdiction. You are solely responsible for ensuring your use of this app complies with applicable laws in your area.

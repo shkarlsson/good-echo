@@ -132,6 +132,17 @@
             android:layout_gravity="center"
             android:src="@drawable/ic_love" />
 
+        <TextView
+            style="@style/SmallText"
+            android:layout_marginTop="30dp"
+            android:layout_marginLeft="15dp"
+            android:layout_marginRight="15dp"
+            android:layout_marginBottom="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/legal_disclaimer" />
+
     </LinearLayout>
 
 </ScrollView>

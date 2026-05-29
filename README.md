@@ -62,6 +62,14 @@ export ANDROID_HOME=/path/to/sdk
 
 The APK will be at `SaidIt/build/outputs/apk/debug/SaidIt-debug.apk`.
 
+Disclaimer
+----------
+
+Recording laws vary by jurisdiction. You are solely responsible for
+ensuring that your use of this app complies with all applicable laws
+in your area. The developers and contributors assume no liability for
+any misuse.
+
 License
 -------
 

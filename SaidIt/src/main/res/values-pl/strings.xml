@@ -89,6 +89,10 @@
     <string name="audio_quality_description">Jakość 8kHz wystarcza do zapisu ludzkiej mowy. Wyższe opcje pozwalają na znalezienie kompromisu między jakością nagrania, a zużyciem pamięci.</string>
     <string name="settings_return">Powrót</string>
 
+    <!-- Legal -->
+
+    <string name="legal_disclaimer">Przepisy dotyczące nagrywania różnią się w zależności od kraju. Ponosisz wyłączną odpowiedzialność za zgodność korzystania z tej aplikacji z obowiązującym prawem. Deweloper nie ponosi odpowiedzialności.</string>
+
     <!-- Others -->
 
     <string name="sample_time">22 minuty i 30 sekund.</string> <!-- must end sentence -->

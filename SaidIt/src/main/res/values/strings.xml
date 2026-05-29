@@ -99,6 +99,10 @@
     <string name="settings">Settings</string>
     <string name="go_back_title">Go back in time</string>
 
+    <!-- Legal -->
+
+    <string name="legal_disclaimer">Recording laws vary by country. You are solely responsible for ensuring your use of this app complies with applicable laws. The developer assumes no liability.</string>
+
     <!-- Others -->
 
     <string name="sample_time">22 minutes and 30 seconds.</string>
