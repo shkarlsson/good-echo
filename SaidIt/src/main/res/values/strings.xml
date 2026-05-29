@@ -112,10 +112,5 @@
     <string name="save_memory_limit_notice">Only %s will be saved.</string>
     <string name="permission_required">Permission required</string>
     <string name="permission_required_message">Echo app requires permission to record and save audio. Please enable it in the settings.</string>
-    <!--
-    <string name="compress_help"><b>WAV</b> - oznacza brak jakiejkolwiek kompresji - jest to format najlepiej oszczędzający baterię i cechujący się najlepszą jakością. Jego wadą jest duże zużycie pamięci.\n
-<b>3GP</b> - oferuje najmocniejszą kompresję ale jest bardzo energożerny i może usunąć z nagrania drobne detale\n
-<b>MP4</b> - oferuje wysoką jakość i dobrą kompresję ale podobnie jak 3GP, szybko zużywa energię.</string>
-    -->
 
 </resources>
