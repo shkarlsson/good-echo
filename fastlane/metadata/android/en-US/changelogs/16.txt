@@ -1,5 +1,5 @@
 <ul>
-<li>Forked as GoodEcho</li>
+<li>Forked as good-echo</li>
 <li>Replaced WAV with Opus encoding (smaller files)</li>
 <li>Compressed audio in memory — store hours of history</li>
 <li>Redesigned UI — scroll wheel duration picker</li>

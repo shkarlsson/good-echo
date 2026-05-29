@@ -1,5 +1,5 @@
-GoodEcho
-========
+good-echo
+=========
 
 Time travelling recorder for Android. Free/libre software under the GPL v3.
 
