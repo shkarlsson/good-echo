@@ -79,7 +79,7 @@ public class RecordingDoneDialog extends ThemedDialog {
             public void onClick(View v) {
                 Intent shareIntent = new Intent();
                 shareIntent.setAction(Intent.ACTION_SEND);
-                Uri fileUri = FileProvider.getUriForFile(activity, BuildConfig.APPLICATION_ID + ".provider", file);
+                Uri fileUri = FileProvider.getUriForFile(activity, activity.getPackageName() + ".provider", file);
                 shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
                 shareIntent.setType(activity.getContentResolver().getType(fileUri)); // Get MIME type from content resolver
                 shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); // Grant read permission
@@ -93,7 +93,7 @@ public class RecordingDoneDialog extends ThemedDialog {
             public void onClick(View v) {
                 Intent intent = new Intent();
                 intent.setAction(android.content.Intent.ACTION_VIEW);
-                Uri fileUri = FileProvider.getUriForFile(activity, BuildConfig.APPLICATION_ID + ".provider", file);
+                Uri fileUri = FileProvider.getUriForFile(activity, activity.getPackageName() + ".provider", file);
                 intent.setDataAndType(fileUri, "audio/*");
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); // Grant read permission
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

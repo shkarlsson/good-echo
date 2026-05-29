@@ -60,8 +60,6 @@
     <string name="record_2_hrs">2 Hrs</string>
     <string name="record_6_hrs">6 Hrs</string>
     <string name="record_all_memory">0:00</string>
-    <string name="default_price">$ 3.90</string>
-
     <string name="record_description">To keep recording after saving memory with one of the buttons above, hold it longer.</string>
 
     <string name="upper_memory_limit_start">Memory is limited at</string>
@@ -74,34 +72,7 @@
     <!-- Dialogs -->
 
     <string name="work_default">Working</string>
-    <string name="work_verifying_purchase">Verifying purchase</string>
     <string name="work_preparing_memory">Preparing memory</string>
-    <string name="work_contacting_server">Contacting server</string>
-    <string name="work_claiming_coupon">Claiming coupon</string>
-
-    <string name="install_qr_dialog_title">Install QR reader</string>
-
-    <string name="payment_method_dialog_title">How can you pay?</string>
-
-    <string name="payment_failed_dialog_title">Payment Not Confirmed</string>
-    <string name="payment_failed_description">You have purchased Echo but I can\'t verify payment online. How should I proceed?</string>
-    <string name="payment_failed_description2">To give up payment verification, open Settings > Applications > Echo and clear its data.</string>
-    <string name="payment_failed_dialog_confirm_manually">Confirm by email</string>
-
-    <string name="payment_verification_failed_email_sent_title">Issue report sent</string>
-    <string name="payment_verification_failed_email_sent_description">Email with your error was sent to the developer. Soon you should receive an answer with a QR-coded license.</string>
-
-    <string name="invalid_license_title">Invalid License</string>
-    <string name="invalid_license_description">Scanned license doesn\'t match to your device.</string>
-
-    <string name="invalid_qr_code_title">Invalid QR code</string>
-    <string name="invalid_qr_code_description">This QR code wasn\'t made for Echo.</string>
-
-    <string name="cant_connect_title">Couldn\'t Contact Server</string>
-    <string name="cant_connect_description">There was an error while contacting application\'s server. Ensure that internet connection is working and try again. If it still doesn\'t work, try different payment method.</string>
-
-    <string name="coupon_claimed">Coupon Already Claimed</string>
-    <string name="try_another_qr_code">Try another</string>
 
     <string name="recording_done_title">Recording ready</string>
     <string name="recording_done_filename">File name:</string>

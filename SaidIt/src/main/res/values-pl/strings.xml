@@ -53,8 +53,6 @@
     <string name="record_30_minutes">30:00</string>
     <string name="record_2_hrs">2 godz</string>
     <string name="record_6_hrs">6 godz</string>
-    <string name="default_price">9.90 zł</string>
-
     <string name="record_description">Aby po zapisaniu pamięci dowolnym z powyższych przycisków, kontynuować nagrywanie, przytrzymaj go dłużej.</string>
 
     <string name="upper_memory_limit_start">Górny limit pamięci to</string>
@@ -67,34 +65,7 @@
     <!-- Dialogs -->
 
     <string name="work_default">Pracuję</string>
-    <string name="work_verifying_purchase">Weryfikuję zakup</string>
     <string name="work_preparing_memory">Przygotowuję pamięć</string>
-    <string name="work_contacting_server">Odpytuję serwer</string>
-    <string name="work_claiming_coupon">Wykorzystuję kupon</string>
-
-    <string name="install_qr_dialog_title">Zainstaluj czytnik QR</string>
-
-    <string name="payment_method_dialog_title">Jak chcesz zapłacić?</string>
-
-    <string name="payment_failed_dialog_title">Płatność Nie Potwierdzona</string>
-    <string name="payment_failed_description">Nie mogę zweryfikować zakupu Echo na serwerze aplikacji. Co mam zrobić?</string>
-    <string name="payment_failed_description2">Aby zupełnie zrezygnować z płatności otwórz Ustawienia > Aplikacje > Echo i wyczyść dane aplikacji.</string>
-    <string name="payment_failed_dialog_confirm_manually">Potwierdź przez email</string>
-
-    <string name="payment_verification_failed_email_sent_title">Raport Wysłany</string>
-    <string name="payment_verification_failed_email_sent_description">Email z opisem twojego problemu został wysłany do autora. Wkrótce otrzymasz odpowiedź z licencją w postaci kodu QR.</string>
-
-    <string name="invalid_license_title">Nieprawidłowa Licencja</string>
-    <string name="invalid_license_description">Zeskanowana licencja nie pasuje do twojego urządzenia.</string>
-
-    <string name="invalid_qr_code_title">Nieprawidłowy kod QR</string>
-    <string name="invalid_qr_code_description">Ten kod nie jest ani licencją, ani kuponem na Echo.</string>
-
-    <string name="cant_connect_title">Serwer Nieosiągalny</string>
-    <string name="cant_connect_description">Nie udało mi się skontaktować z serwerem aplikacji. Upewnij się, że połączenie z internetem działa prawidłowo i spróbuj jeszcze raz. Jeśli wciąż występują problemy, spróbuj innej metody płatności.</string>
-
-    <string name="coupon_claimed">Kupon Zużyty</string>
-    <string name="try_another_qr_code">Spróbuj innego</string>
 
     <string name="recording_done_title">Nagranie Gotowe</string>
     <string name="recording_done_filename">Nazwa pliku:</string>

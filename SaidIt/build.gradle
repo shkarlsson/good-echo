@@ -27,38 +27,26 @@ android {
         versionName "2.0.0"
     }
 
-    signingConfigs {
-        release {
-            storeFile file("<relative path>")
-            storePassword "<fill in>"
-            keyAlias "<fill in>"
-            keyPassword "<fill in>"
-        }
-    }
-
     buildTypes {
         release {
             minifyEnabled true
             proguardFile file('proguard.cfg')
             proguardFile getDefaultProguardFile('proguard-android-optimize.txt')
-            signingConfig signingConfigs.release
         }
 
         debug {
-            //signingConfig signingConfigs.release
         }
     }
     lint {
         abortOnError false
     }
     buildFeatures {
-        buildConfig true
+        buildConfig false
     }
 
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: '*.jar')
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.recyclerview:recyclerview:1.3.2'
     implementation 'io.github.jaredmdobson:concentus:1.0.2'
