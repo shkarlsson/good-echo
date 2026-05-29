@@ -1,4 +1,4 @@
-package eu.mrogalski.saidit;
+package com.goodecho.app;
 public final class IntentResult {
 
     private final String contents;

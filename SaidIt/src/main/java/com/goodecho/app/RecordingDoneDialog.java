@@ -1,4 +1,4 @@
-package eu.mrogalski.saidit;
+package com.goodecho.app;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;

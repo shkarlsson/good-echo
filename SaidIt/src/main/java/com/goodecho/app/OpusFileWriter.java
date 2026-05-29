@@ -1,4 +1,4 @@
-package eu.mrogalski.saidit;
+package com.goodecho.app;
 
 import io.github.jaredmdobson.concentus.OpusApplication;
 import io.github.jaredmdobson.concentus.OpusEncoder;

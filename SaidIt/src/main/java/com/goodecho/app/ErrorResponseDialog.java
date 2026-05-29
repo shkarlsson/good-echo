@@ -1,4 +1,4 @@
-package eu.mrogalski.saidit;
+package com.goodecho.app;
 
 public class ErrorResponseDialog extends ThemedDialog {
     @Override

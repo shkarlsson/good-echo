@@ -1,4 +1,4 @@
-package eu.mrogalski.saidit;
+package com.goodecho.app;
 
 import java.io.IOException;
 import java.util.Arrays;

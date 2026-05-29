@@ -1,4 +1,4 @@
-package eu.mrogalski.saidit;
+package com.goodecho.app;
 
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
@@ -32,7 +32,7 @@ import java.io.IOException;
 import io.github.jaredmdobson.concentus.OpusApplication;
 import io.github.jaredmdobson.concentus.OpusEncoder;
 import io.github.jaredmdobson.concentus.OpusException;
-import static eu.mrogalski.saidit.SaidIt.*;
+import static com.goodecho.app.SaidIt.*;
 
 public class SaidItService extends Service {
     static final String TAG = SaidItService.class.getSimpleName();

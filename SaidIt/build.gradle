@@ -16,11 +16,11 @@ repositories {
 }
 
 android {
-    namespace 'eu.mrogalski.saidit'
+    namespace 'com.goodecho.app'
     compileSdk 34
 
     defaultConfig{
-        applicationId "eu.mrogalski.saidit"
+        applicationId "com.goodecho.app"
         minSdk 30
         targetSdk 34
         versionCode 15

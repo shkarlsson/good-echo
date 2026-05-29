@@ -2,7 +2,7 @@ package eu.mrogalski.android;
 
 import android.content.res.Resources;
 
-import eu.mrogalski.saidit.R;
+import com.goodecho.app.R;
 
 public class TimeFormat {
     public static void naturalLanguage(Resources resources, float secondsF, Result outResult) {
