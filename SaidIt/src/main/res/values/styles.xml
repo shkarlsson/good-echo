@@ -99,6 +99,10 @@
         <item name="android:textColor">@color/gray_f</item>
     </style>
 
+    <style name="GreenButtonRounded" parent="GreenButton">
+        <item name="android:background">@drawable/green_button</item>
+    </style>
+
     <style name="TextBase" parent="android:Widget.TextView">
         <item name="android:textColor">@color/gray_0</item>
         <item name="android:textSize">@dimen/info_text_size</item>

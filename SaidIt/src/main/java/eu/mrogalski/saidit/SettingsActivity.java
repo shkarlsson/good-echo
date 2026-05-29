@@ -9,31 +9,33 @@ import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.media.AudioFormat;
-import android.media.AudioRecord;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
+import android.view.KeyEvent;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import eu.mrogalski.StringFormat;
 import eu.mrogalski.android.TimeFormat;
 import eu.mrogalski.android.Views;
 
 public class SettingsActivity extends Activity {
     static final String TAG = SettingsActivity.class.getSimpleName();
-    private final MemoryOnClickListener memoryClickListener = new MemoryOnClickListener();
-    private final QualityOnClickListener qualityClickListener = new QualityOnClickListener();
-
-
     final WorkingDialog dialog = new WorkingDialog();
 
     @Override
@@ -69,39 +71,17 @@ public class SettingsActivity extends Activity {
     final TimeFormat.Result timeFormatResult = new TimeFormat.Result();
 
     private void syncUI() {
-        final long maxMemory = Runtime.getRuntime().maxMemory();
-        System.out.println("maxMemory = " + maxMemory);
-        System.out.println("totalMemory = " + Runtime.getRuntime().totalMemory());
+        long memoryBytes = service.getMemorySize();
+        int mb = (int)(memoryBytes / 1024 / 1024);
+        if (mb < 1) mb = 1;
 
-        ((Button) findViewById(R.id.memory_low)).setText(StringFormat.shortFileSize(maxMemory / 4));
-        ((Button) findViewById(R.id.memory_medium)).setText(StringFormat.shortFileSize(maxMemory / 2));
-//        ((Button) findViewById(R.id.memory_high)).setText(StringFormat.shortFileSize(maxMemory * 3 / 4));
-        ((Button) findViewById(R.id.memory_high)).setText(StringFormat.shortFileSize((long) (maxMemory * 0.90)));
+        EditText input = (EditText) findViewById(R.id.memory_input);
+        input.setText(String.valueOf(mb));
 
+        updateMemoryValueLabel(mb);
 
-        TimeFormat.naturalLanguage(getResources(), service.getBytesToSeconds() * service.getMemorySize(), timeFormatResult);
+        TimeFormat.naturalLanguage(getResources(), service.getMemorizedSeconds(), timeFormatResult);
         ((TextView)findViewById(R.id.history_limit)).setText(timeFormatResult.text);
-
-        highlightButtons();
-    }
-
-    void highlightButtons() {
-        final long maxMemory = Runtime.getRuntime().maxMemory();
-
-        int button = (int)(service.getMemorySize() / (maxMemory / 4)); // 1 - memory_low; 2 - memory_medium; 3 - memory_high
-        highlightButton(R.id.memory_low, R.id.memory_medium, R.id.memory_high, button);
-
-        int samplingRate = service.getSamplingRate();
-        if(samplingRate >= 44100) button = 3;
-        else if(samplingRate >= 16000) button = 2;
-        else button = 1;
-        highlightButton(R.id.quality_8kHz, R.id.quality_16kHz, R.id.quality_48kHz, button);
-    }
-
-    private void highlightButton(int button1, int button2, int button3, int i) {
-        findViewById(button1).setBackgroundResource(1 == i ? R.drawable.green_button : R.drawable.gray_button);
-        findViewById(button2).setBackgroundResource(2 == i ? R.drawable.green_button : R.drawable.gray_button);
-        findViewById(button3).setBackgroundResource(3 == i ? R.drawable.green_button : R.drawable.gray_button);
     }
 
     @Override
@@ -158,19 +138,123 @@ public class SettingsActivity extends Activity {
 
         myFrameLayout.addView(root);
 
-        root.findViewById(R.id.memory_low).setOnClickListener(memoryClickListener);
-        root.findViewById(R.id.memory_medium).setOnClickListener(memoryClickListener);
-        root.findViewById(R.id.memory_high).setOnClickListener(memoryClickListener);
+        EditText memoryInput = (EditText) root.findViewById(R.id.memory_input);
+        memoryInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    applyMemoryInput(v);
+                    return true;
+                }
+                return false;
+            }
+        });
+        memoryInput.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus) {
+                    applyMemoryInput((TextView) v);
+                }
+            }
+        });
+        memoryInput.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                int mb = 50;
+                try {
+                    mb = Integer.parseInt(s.toString());
+                } catch (NumberFormatException ignored) {}
+                updateMemoryValueLabel(mb);
+            }
+        });
 
-        initSampleRateButton(root, R.id.quality_8kHz, 8000, 11025);
-        initSampleRateButton(root, R.id.quality_16kHz, 16000, 22050);
-        initSampleRateButton(root, R.id.quality_48kHz, 48000, 44100);
+        ImageButton githubButton = (ImageButton) root.findViewById(R.id.rate_on_google_play);
+        githubButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/mafik/echo")));
+                } catch (android.content.ActivityNotFoundException anfe) {
+                    // ignore
+                }
+            }
+        });
+
+        final ImageView heart = (ImageView) root.findViewById(R.id.heart);
+        final Animation pulse = AnimationUtils.loadAnimation(this, R.anim.pulse);
+        heart.startAnimation(pulse);
+        heart.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                heart.animate().scaleX(10).scaleY(10).alpha(0).setDuration(2000).start();
+                Handler handler = new Handler(SettingsActivity.this.getMainLooper());
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/sponsors/mafik")));
+                        } catch (android.content.ActivityNotFoundException anfe) {
+                            // ignore
+                        }
+                    }
+                }, 1000);
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        heart.setAlpha(0f);
+                        heart.setScaleX(1);
+                        heart.setScaleY(1);
+                        heart.animate().alpha(1).start();
+                    }
+                }, 3000);
+            }
+        });
 
         //debugPrintCodecs();
 
         dialog.setDescriptionStringId(R.string.work_preparing_memory);
 
         setContentView(myFrameLayout);
+    }
+
+    private void applyMemoryInput(TextView textView) {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(textView.getWindowToken(), 0);
+        int mb = 50;
+        try {
+            mb = Integer.parseInt(textView.getText().toString());
+        } catch (NumberFormatException ignored) {}
+        if (mb < 1) mb = 1;
+        final long memoryBytes = mb * 1024L * 1024L;
+        dialog.show(getFragmentManager(), "Preparing memory");
+        new Handler().post(new Runnable() {
+            @Override
+            public void run() {
+                service.setMemorySize(memoryBytes);
+                service.getState(new SaidItService.StateCallback() {
+                    @Override
+                    public void state(boolean listeningEnabled, boolean recording, float memorized, float totalMemory, float recorded) {
+                        syncUI();
+                        if (dialog.isVisible()) dialog.dismiss();
+                    }
+                });
+            }
+        });
+    }
+
+    private void updateMemoryValueLabel(int mb) {
+        long memoryBytes = mb * 1024L * 1024L;
+        long available = service != null ? service.getAvailableMemory()
+                : Runtime.getRuntime().maxMemory() - SaidItService.RESERVED_MEMORY;
+        if (available < 1) available = 1;
+        int pct = (int)(memoryBytes * 100 / available);
+        if (pct > 100) pct = 100;
+        ((TextView)findViewById(R.id.memory_value))
+                .setText(mb + " MB (" + pct + "%)");
     }
 
     private void debugPrintCodecs() {
@@ -192,83 +276,4 @@ public class SettingsActivity extends Activity {
         }
     }
 
-    private void initSampleRateButton(ViewGroup layout, int buttonId, int primarySampleRate, int secondarySampleRate) {
-        Button button = (Button) layout.findViewById(buttonId);
-        button.setOnClickListener(qualityClickListener);
-        if(testSampleRateValid(primarySampleRate)) {
-            button.setText(String.format("%d kHz", primarySampleRate / 1000));
-            button.setTag(primarySampleRate);
-        } else if(testSampleRateValid(secondarySampleRate)) {
-            button.setText(String.format("%d kHz", secondarySampleRate / 1000));
-            button.setTag(secondarySampleRate);
-        } else {
-            button.setVisibility(View.GONE);
-        }
-    }
-
-    private boolean testSampleRateValid(int sampleRate) {
-        final int bufferSize = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-        return bufferSize > 0;
-    }
-
-    private class MemoryOnClickListener implements View.OnClickListener {
-        @Override
-        public void onClick(View v) {
-            final long memory = getMultiplier(v) * Runtime.getRuntime().maxMemory() / 4;
-            dialog.show(getFragmentManager(), "Preparing memory");
-
-            new Handler().post(new Runnable() {
-                @Override
-                public void run() {
-                    service.setMemorySize(memory);
-                    service.getState(new SaidItService.StateCallback() {
-                        @Override
-                        public void state(boolean listeningEnabled, boolean recording, float memorized, float totalMemory, float recorded) {
-                            syncUI();
-                            if (dialog.isVisible()) dialog.dismiss();
-                        }
-                    });
-                }
-            });
-        }
-
-        private int getMultiplier(View button) {
-            switch (button.getId()) {
-                case R.id.memory_high: return 3;
-                case R.id.memory_medium: return 2;
-                case R.id.memory_low: return 1;
-            }
-            return 0;
-        }
-    }
-
-    private class QualityOnClickListener implements View.OnClickListener {
-        @Override
-        public void onClick(View v) {
-            final int sampleRate = getSampleRate(v);
-            dialog.show(getFragmentManager(), "Preparing memory");
-
-            new Handler().post(new Runnable() {
-                @Override
-                public void run() {
-                    service.setSampleRate(sampleRate);
-                    service.getState(new SaidItService.StateCallback() {
-                        @Override
-                        public void state(boolean listeningEnabled, boolean recording, float memorized, float totalMemory, float recorded) {
-                            syncUI();
-                            if (dialog.isVisible()) dialog.dismiss();
-                        }
-                    });
-                }
-            });
-        }
-
-        private int getSampleRate(View button) {
-            Object tag = button.getTag();
-            if(tag instanceof Integer) {
-                return ((Integer) tag).intValue();
-            }
-            return 8000;
-        }
-    }
 }

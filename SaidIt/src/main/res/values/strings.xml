@@ -29,6 +29,16 @@
         <item quantity="other">Memory holds the most recent</item>
     </plurals>
 
+    <plurals name="day">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+
+    <plurals name="hour">
+        <item quantity="one">%d hour</item>
+        <item quantity="other">%d hours</item>
+    </plurals>
+
     <plurals name="minute">
         <item quantity="one">%d minute</item>
         <item quantity="other">%d minutes</item>
@@ -115,12 +125,16 @@
     <string name="used_ram_description">Echo and other apps use system memory to keep their data. Large system memory consumption may slow other apps.</string>
     <string name="audio_quality_description">Quality of 8kHz is enough to recognize human speech. Higher options offer different tradeoffs between quality and memory consumption.</string>
     <string name="settings_return">Return</string>
+    <string name="settings">Settings</string>
+    <string name="go_back_title">Go back in time</string>
 
     <!-- Others -->
 
     <string name="sample_time">22 minutes and 30 seconds.</string>
     <string name="recording_name">Enter the name of the recording</string> <!-- must end sentence -->
     <string name="save_recording">Save Recording</string> <!-- must end sentence -->
+    <string name="save">Save</string>
+    <string name="save_memory_limit_notice">Only %s will be saved.</string>
     <string name="permission_required">Permission required</string>
     <string name="permission_required_message">Echo app requires permission to record and save audio. Please enable it in the settings.</string>
     <!--

@@ -22,13 +22,10 @@ import android.os.IBinder;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.ImageView;
+
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -66,7 +63,6 @@ public class SaidItFragment extends Fragment {
     private RecyclerView timeWheel;
     private Button saveButton;
     private int maxMemorizedSeconds;
-    private TextView history_limit;
     private PickerAdapter pickerAdapter;
     private int currentSelectedPosition = 0;
 
@@ -79,15 +75,12 @@ public class SaidItFragment extends Fragment {
         }
     }
     private ArrayList<PickerEntry> pickerEntries = new ArrayList<>();
-    private TextView history_size;
-    private TextView history_size_title;
+    private TextView wheelTitle;
 
     private LinearLayout rec_section;
     private TextView rec_indicator;
     private TextView rec_time;
-
-    private ImageButton rate_on_google_play;
-    private ImageView heart;
+    private TextView memoryLimitNotice;
 
     @Override
     public void onStart() {
@@ -193,12 +186,7 @@ public class SaidItFragment extends Fragment {
             }
         });
 
-        history_limit = (TextView) rootView.findViewById(R.id.history_limit);
-        history_size = (TextView) rootView.findViewById(R.id.history_size);
-        history_size_title = (TextView) rootView.findViewById(R.id.history_size_title);
-
-        history_limit.setTypeface(robotoCondensedBold);
-        history_size.setTypeface(robotoCondensedBold);
+        wheelTitle = (TextView) rootView.findViewById(R.id.wheel_title);
 
         listenButton = (Button) rootView.findViewById(R.id.listen_button);
         if (listenButton != null) {
@@ -274,52 +262,7 @@ public class SaidItFragment extends Fragment {
         rec_section = (LinearLayout) rootView.findViewById(R.id.rec_section);
         rec_indicator = (TextView) rootView.findViewById(R.id.rec_indicator);
         rec_time = (TextView) rootView.findViewById(R.id.rec_time);
-
-        rate_on_google_play = (ImageButton) rootView.findViewById(R.id.rate_on_google_play);
-
-        final Animation pulse = AnimationUtils.loadAnimation(activity, R.anim.pulse);
-        heart = (ImageView) rootView.findViewById(R.id.heart);
-        heart.startAnimation(pulse);
-
-        rate_on_google_play.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/mafik/echo")));
-                } catch (android.content.ActivityNotFoundException anfe) {
-                    // ignore
-                }
-            }
-        });
-
-        heart.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                heart.animate().scaleX(10).scaleY(10).alpha(0).setDuration(2000).start();
-                Handler handler = new Handler(activity.getMainLooper());
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        // star the app
-                        try {
-                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/sponsors/mafik")));
-                        } catch (android.content.ActivityNotFoundException anfe) {
-                            // ignore
-                        }
-                    }
-                }, 1000);
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        heart.setAlpha(0f);
-                        heart.setScaleX(1);
-                        heart.setScaleY(1);
-                        heart.animate().alpha(1).start();
-
-                    }
-                }, 3000);
-            }
-        });
+        memoryLimitNotice = (TextView) rootView.findViewById(R.id.memory_limit_notice);
 
         rootView.findViewById(R.id.settings_button).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -327,6 +270,7 @@ public class SaidItFragment extends Fragment {
                 startActivity(new Intent(activity, SettingsActivity.class));
             }
         });
+
         serviceStateCallback.state(isListening, isRecording, 0, 0, 0);
         return rootView;
     }
@@ -367,31 +311,12 @@ public class SaidItFragment extends Fragment {
                 }
             }
 
-            TimeFormat.naturalLanguage(resources, totalMemory, timeFormatResult);
-
-            if (!history_limit.getText().equals(timeFormatResult.text)) {
-                history_limit.setText(timeFormatResult.text);
-            }
-
             TimeFormat.naturalLanguage(resources, memorized, timeFormatResult);
 
-            if (!history_size.getText().equals(timeFormatResult.text)) {
-                history_size_title.setText(resources.getQuantityText(R.plurals.history_size_title, timeFormatResult.count));
-                history_size.setText(timeFormatResult.text);
-            }
-
             maxMemorizedSeconds = (int) memorized;
-            saveButton.setEnabled(maxMemorizedSeconds > 0);
             updatePickerLimit();
 
-            TimeFormat.naturalLanguage(resources, recorded, timeFormatResult);
-
-            if (!rec_time.getText().equals(timeFormatResult.text)) {
-                rec_indicator.setText(resources.getQuantityText(R.plurals.recorded, timeFormatResult.count));
-                rec_time.setText(timeFormatResult.text);
-            }
-
-            history_size.postOnAnimationDelayed(updater, 100);
+            timeWheel.postOnAnimationDelayed(updater, 100);
         }
     };
 
@@ -543,7 +468,25 @@ public class SaidItFragment extends Fragment {
     }
 
     private void updatePickerLimit() {
+        if (saveButton == null || memoryLimitNotice == null) return;
         saveButton.setEnabled(maxMemorizedSeconds > 0);
+        if (!pickerEntries.isEmpty() && currentSelectedPosition >= 0 && currentSelectedPosition < pickerEntries.size()) {
+            int selected = pickerEntries.get(currentSelectedPosition).secondsAgo;
+            if (selected > maxMemorizedSeconds && maxMemorizedSeconds > 0) {
+                String duration = "";
+                TimeFormat.naturalLanguage(getResources(), maxMemorizedSeconds, timeFormatResult);
+                duration = timeFormatResult.text;
+                if (duration.endsWith(".")) {
+                    duration = duration.substring(0, duration.length() - 1);
+                }
+                memoryLimitNotice.setText(getString(R.string.save_memory_limit_notice, duration));
+                memoryLimitNotice.setVisibility(View.VISIBLE);
+            } else {
+                memoryLimitNotice.setVisibility(View.GONE);
+            }
+        } else {
+            memoryLimitNotice.setVisibility(View.GONE);
+        }
     }
 
     private int getSelectedSeconds() {
@@ -602,7 +545,7 @@ public class SaidItFragment extends Fragment {
     static Notification buildNotificationForFile(Context context, File outFile) {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         Uri fileUri = FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".provider", outFile);
-        intent.setDataAndType(fileUri, "audio/wav");
+        intent.setDataAndType(fileUri, "audio/ogg");
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); // Grant read permission to the receiving app
 
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
@@ -619,7 +562,7 @@ public class SaidItFragment extends Fragment {
         return notificationBuilder.build();
     }
 
-    static class NotifyFileReceiver implements SaidItService.WavFileReceiver {
+    static class NotifyFileReceiver implements SaidItService.RecordingReceiver {
 
         private Context context;
 
@@ -644,7 +587,7 @@ public class SaidItFragment extends Fragment {
         }
     }
 
-    static class PromptFileReceiver implements SaidItService.WavFileReceiver {
+    static class PromptFileReceiver implements SaidItService.RecordingReceiver {
 
         private Activity activity;
 

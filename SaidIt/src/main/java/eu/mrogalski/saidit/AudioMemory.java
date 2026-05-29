@@ -15,7 +15,7 @@ public class AudioMemory {
     private boolean currentWasFilled = false;
     private byte[] current = null;
     private int offset = 0;
-    static final int CHUNK_SIZE = 1920000; // 20 seconds of 48kHz wav (single channel, 16-bit samples) (1875 kB)
+    static final int CHUNK_SIZE = 480000; // 5 seconds of 48kHz wav (single channel, 16-bit samples) (~469 kB)
 
     synchronized public void allocate(long sizeToEnsure) {
         long currentSize = getAllocatedMemorySize();
@@ -32,7 +32,6 @@ public class AudioMemory {
             filled.removeFirst();
         }
         if((current != null) && (currentSize - CHUNK_SIZE >= sizeToEnsure)) {
-            //currentSize -= CHUNK_SIZE;
             current = null;
             offset = 0;
             currentWasFilled = false;
