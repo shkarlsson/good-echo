@@ -3,11 +3,9 @@ package eu.mrogalski.saidit;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.Fragment;
 import android.app.Notification;
 import android.app.PendingIntent;
-import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -18,11 +16,9 @@ import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Typeface;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,8 +37,15 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.FileProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.LinearSnapHelper;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 import eu.mrogalski.android.TimeFormat;
 import eu.mrogalski.android.Views;
@@ -55,19 +58,27 @@ public class SaidItFragment extends Fragment {
     private Button listenButton;
 
     ListenButtonClickListener listenButtonClickListener = new ListenButtonClickListener();
-    RecordButtonClickListener recordButtonClickListener = new RecordButtonClickListener();
 
     private boolean isListening = true;
     private boolean isRecording = false;
 
     private LinearLayout ready_section;
-    private Button recordLastFiveMinutesButton;
-    private Button recordMaxButton;
-    private Button recordLastMinuteButton;
-    private Button recordLastThirtyMinuteButton;
-    private Button recordLastTwoHrsButton;
-    private Button recordLastSixHrsButton;
+    private RecyclerView timeWheel;
+    private Button saveButton;
+    private int maxMemorizedSeconds;
     private TextView history_limit;
+    private PickerAdapter pickerAdapter;
+    private int currentSelectedPosition = 0;
+
+    private static class PickerEntry {
+        final int secondsAgo;
+        final String label;
+        PickerEntry(int secondsAgo, String label) {
+            this.secondsAgo = secondsAgo;
+            this.label = label;
+        }
+    }
+    private ArrayList<PickerEntry> pickerEntries = new ArrayList<>();
     private TextView history_size;
     private TextView history_size_title;
 
@@ -202,31 +213,62 @@ public class SaidItFragment extends Fragment {
 
 
         record_pause_button = (Button) rootView.findViewById(R.id.rec_stop_button);
-        record_pause_button.setOnClickListener(recordButtonClickListener);
+        record_pause_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                echo.stopRecording(new PromptFileReceiver(getActivity()), "");
+            }
+        });
 
-        recordLastMinuteButton = (Button) rootView.findViewById(R.id.record_last_minute);
-        recordLastMinuteButton.setOnClickListener(recordButtonClickListener);
-        recordLastMinuteButton.setOnLongClickListener(recordButtonClickListener);
+        timeWheel = (RecyclerView) rootView.findViewById(R.id.time_wheel);
+        saveButton = (Button) rootView.findViewById(R.id.save_button);
 
-        recordLastFiveMinutesButton = (Button) rootView.findViewById(R.id.record_last_5_minutes);
-        recordLastFiveMinutesButton.setOnClickListener(recordButtonClickListener);
-        recordLastFiveMinutesButton.setOnLongClickListener(recordButtonClickListener);
+        generateEntries(86400);
 
-        recordLastThirtyMinuteButton = (Button) rootView.findViewById(R.id.record_last_30_minutes);
-        recordLastThirtyMinuteButton.setOnClickListener(recordButtonClickListener);
-        recordLastThirtyMinuteButton.setOnLongClickListener(recordButtonClickListener);
+        pickerAdapter = new PickerAdapter(pickerEntries);
+        timeWheel.setAdapter(pickerAdapter);
 
-        recordLastTwoHrsButton = (Button) rootView.findViewById(R.id.record_last_2_hrs);
-        recordLastTwoHrsButton.setOnClickListener(recordButtonClickListener);
-        recordLastTwoHrsButton.setOnLongClickListener(recordButtonClickListener);
+        LinearLayoutManager llm = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
+        timeWheel.setLayoutManager(llm);
 
-        recordLastSixHrsButton = (Button) rootView.findViewById(R.id.record_last_6_hrs);
-        recordLastSixHrsButton.setOnClickListener(recordButtonClickListener);
-        recordLastSixHrsButton.setOnLongClickListener(recordButtonClickListener);
+        LinearSnapHelper snapHelper = new LinearSnapHelper();
+        snapHelper.attachToRecyclerView(timeWheel);
 
-        recordMaxButton = (Button) rootView.findViewById(R.id.record_last_max);
-        recordMaxButton.setOnClickListener(recordButtonClickListener);
-        recordMaxButton.setOnLongClickListener(recordButtonClickListener);
+        timeWheel.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    updateCurrentPosition();
+                    updatePickerLimit();
+                }
+            }
+        });
+
+        // Start at 0 (10s)
+        llm.scrollToPosition(0);
+        // Give layout a chance to settle, then update selection highlight
+        timeWheel.post(new Runnable() {
+            @Override
+            public void run() {
+                updateCurrentPosition();
+                updatePickerLimit();
+            }
+        });
+
+        saveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showSaveDialog(false);
+            }
+        });
+        saveButton.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                showSaveDialog(true);
+                return true;
+            }
+        });
 
         ready_section = (LinearLayout) rootView.findViewById(R.id.ready_section);
         rec_section = (LinearLayout) rootView.findViewById(R.id.rec_section);
@@ -336,8 +378,11 @@ public class SaidItFragment extends Fragment {
             if (!history_size.getText().equals(timeFormatResult.text)) {
                 history_size_title.setText(resources.getQuantityText(R.plurals.history_size_title, timeFormatResult.count));
                 history_size.setText(timeFormatResult.text);
-                recordMaxButton.setText(TimeFormat.shortTimer(memorized));
             }
+
+            maxMemorizedSeconds = (int) memorized;
+            saveButton.setEnabled(maxMemorizedSeconds > 0);
+            updatePickerLimit();
 
             TimeFormat.naturalLanguage(resources, recorded, timeFormatResult);
 
@@ -351,7 +396,84 @@ public class SaidItFragment extends Fragment {
     };
 
     final TimeFormat.Result timeFormatResult = new TimeFormat.Result();
+    private final SimpleDateFormat timeFormatHHmm = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
+    private void updateCurrentPosition() {
+        LinearLayoutManager llm = (LinearLayoutManager) timeWheel.getLayoutManager();
+        if (llm == null) return;
+        int first = llm.findFirstVisibleItemPosition();
+        int last = llm.findLastVisibleItemPosition();
+        if (first == RecyclerView.NO_POSITION || last == RecyclerView.NO_POSITION) return;
+        int center = timeWheel.getHeight() / 2;
+        int bestPos = currentSelectedPosition;
+        int bestDist = Integer.MAX_VALUE;
+        for (int i = first; i <= last; i++) {
+            View v = llm.findViewByPosition(i);
+            if (v == null) continue;
+            int dist = Math.abs((v.getTop() + v.getHeight() / 2) - center);
+            if (dist < bestDist) {
+                bestDist = dist;
+                bestPos = i;
+            }
+        }
+        currentSelectedPosition = bestPos;
+        pickerAdapter.setSelectedPosition(currentSelectedPosition);
+    }
+
+    private class PickerAdapter extends RecyclerView.Adapter<PickerAdapter.ViewHolder> {
+        private final ArrayList<PickerEntry> entries;
+        private int selectedPosition = 0;
+
+        PickerAdapter(ArrayList<PickerEntry> entries) {
+            this.entries = entries;
+        }
+
+        void setSelectedPosition(int pos) {
+            if (pos == selectedPosition) return;
+            int old = selectedPosition;
+            selectedPosition = pos;
+            notifyItemChanged(old);
+            notifyItemChanged(selectedPosition);
+        }
+
+        @Override
+        public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            TextView tv = new TextView(parent.getContext());
+            tv.setLayoutParams(new RecyclerView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
+            tv.setGravity(android.view.Gravity.CENTER);
+            float density = parent.getResources().getDisplayMetrics().density;
+            tv.setPadding(0, (int)(12 * density), 0, (int)(12 * density));
+            return new ViewHolder(tv);
+        }
+
+        @Override
+        public void onBindViewHolder(ViewHolder holder, int position) {
+            holder.textView.setText(entries.get(position).label);
+            if (position == selectedPosition) {
+                holder.textView.setTextSize(28);
+                holder.textView.setTextColor(0xFF222222);
+            } else {
+                holder.textView.setTextSize(20);
+                holder.textView.setTextColor(0x88222222);
+            }
+        }
+
+        @Override
+        public int getItemCount() {
+            return entries.size();
+        }
+
+        class ViewHolder extends RecyclerView.ViewHolder {
+            TextView textView;
+            ViewHolder(TextView tv) {
+                super(tv);
+                textView = tv;
+            }
+        }
+    }
 
     private class ListenButtonClickListener implements View.OnClickListener {
 
@@ -390,78 +512,90 @@ public class SaidItFragment extends Fragment {
         }
     }
 
-    private class RecordButtonClickListener implements View.OnClickListener, View.OnLongClickListener {
+    private void showSaveDialog(final boolean keepRecording) {
+        final int seconds = getSelectedSeconds();
+        if (seconds <= 0) return;
 
-        @Override
-        public void onClick(final View v) {
-            record(v, false);
-        }
-
-        @Override
-        public boolean onLongClick(final View v) {
-            record(v, true);
-            return true;
-        }
-
-        public void record(final View button, final boolean keepRecording) {
-            echo.getState(new SaidItService.StateCallback() {
-                @Override
-                public void state(final boolean listeningEnabled, final boolean recording, float memorized, float totalMemory, float recorded) {
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (recording) {
-                                echo.stopRecording(new PromptFileReceiver(getActivity()),"");
-                            } else {
-                                ProgressDialog pd = new ProgressDialog(getActivity());
-                                pd.setMessage("Recording...");
-                                pd.show();
-                                final float seconds = getPrependedSeconds(button);
-                                if (keepRecording) {
-                                    echo.startRecording(seconds);
-                                } else {
-                                    //create alert dialog with exittext to name the file
-                                    View dialogView = View.inflate(getActivity(), R.layout.dialog_save_recording, null);
-                                    EditText fileName = dialogView.findViewById(R.id.recording_name);
-                                    new AlertDialog.Builder(getActivity())
-                                        .setView(dialogView)
-                                        .setPositiveButton("Save", new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialog, int which) {
-                                                if(fileName.getText().toString().length() > 0){
-                                                    echo.dumpRecording(seconds, new PromptFileReceiver(getActivity()),fileName.getText().toString());
-                                                } else {
-                                                    Toast.makeText(getActivity(), "Please enter a file name", Toast.LENGTH_SHORT).show();
-                                                }
-                                            }
-                                        })
-                                        .setNegativeButton("Cancel", null)
-                                        .show();
-                                    pd.dismiss();
-                                }
-                            }
+        if (keepRecording) {
+            echo.startRecording(seconds);
+        } else {
+            View dialogView = View.inflate(getActivity(), R.layout.dialog_save_recording, null);
+            EditText fileName = dialogView.findViewById(R.id.recording_name);
+            new AlertDialog.Builder(getActivity())
+                .setView(dialogView)
+                .setPositiveButton("Save", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (fileName.getText().toString().length() > 0) {
+                            echo.dumpRecording(seconds, new PromptFileReceiver(getActivity()), fileName.getText().toString());
+                        } else {
+                            Toast.makeText(getActivity(), "Please enter a file name", Toast.LENGTH_SHORT).show();
                         }
-                    });
-                }
-            });
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+        }
+    }
+
+    private void updateLabels(int seconds) {
+        // Info is shown on the NumberPicker itself via its formatter
+    }
+
+    private void updatePickerLimit() {
+        saveButton.setEnabled(maxMemorizedSeconds > 0);
+    }
+
+    private int getSelectedSeconds() {
+        if (pickerEntries.isEmpty()) return 0;
+        if (currentSelectedPosition < 0 || currentSelectedPosition >= pickerEntries.size()) return 0;
+        return Math.min(pickerEntries.get(currentSelectedPosition).secondsAgo, maxMemorizedSeconds);
+    }
+
+    private static String formatDuration(int secs) {
+        if (secs < 60) return secs + "s";
+        if (secs < 3600) return (secs / 60) + "m";
+        return (secs / 3600) + "h";
+    }
+
+    private void generateEntries(int maxSeconds) {
+        pickerEntries.clear();
+        if (maxSeconds <= 10) return;
+
+        // 10-60s, step 10s
+        for (int s = 10; s <= 60; s += 10) {
+            pickerEntries.add(new PickerEntry(s, formatDuration(s)));
         }
 
-        float getPrependedSeconds(View button) {
-            switch (button.getId()) {
-                case R.id.record_last_minute:
-                    return 60;
-                case R.id.record_last_5_minutes:
-                    return 60 * 5;
-                case R.id.record_last_30_minutes:
-                    return 60 * 30;
-                case R.id.record_last_2_hrs:
-                    return 60 * 60 * 2;
-                case R.id.record_last_6_hrs:
-                    return 60 * 60 * 6;
-                case R.id.record_last_max:
-                    return 60 * 60 * 24 * 365;
+        // 1-10min, step 1min (skip 60s which is already added)
+        for (int s = 120; s <= 600; s += 60) {
+            pickerEntries.add(new PickerEntry(s, formatDuration(s)));
+        }
+
+        // 10min-1h: 5min steps, clock-aligned
+        addClockAligned(600, 3600, 300);
+        // 1h-12h: 15min steps, clock-aligned
+        addClockAligned(3600, 43200, 900);
+        // 12h+: 1h steps, clock-aligned
+        addClockAligned(43200, maxSeconds, 3600);
+
+        updatePickerLimit();
+    }
+
+    private void addClockAligned(int startSec, int maxSeconds, int stepSec) {
+        long nowMs = System.currentTimeMillis();
+        long stepMs = stepSec * 1000L;
+        long t = (nowMs / stepMs) * stepMs;
+        while (true) {
+            int secsAgo = (int) ((nowMs - t) / 1000);
+            if (secsAgo < startSec) { t -= stepMs; continue; }
+            if (secsAgo >= maxSeconds) break;
+            int prev = pickerEntries.isEmpty() ? -1 : pickerEntries.get(pickerEntries.size() - 1).secondsAgo;
+            if (secsAgo != prev) {
+                String label = timeFormatHHmm.format(new Date(t));
+                pickerEntries.add(new PickerEntry(secsAgo, label));
             }
-            return 0;
+            t -= stepMs;
         }
     }
 

@@ -42,6 +42,7 @@
     </plurals>
 
     <string name="save_description">To save contents of memory to a file, choose how much time would you like to save:</string>
+    <string name="save_description_scroll">Scroll to choose how much time to save:</string>
 
     <string name="record_one_minute">1:00</string>
     <string name="record_five_minutes">5:00</string>

@@ -27,4 +27,5 @@
 
     <color name="half_green">#8046d869</color>
     <color name="quarter_green">#4046d869</color>
+    <color name="dark_bg">#ff1a1a1a</color>
 </resources>
