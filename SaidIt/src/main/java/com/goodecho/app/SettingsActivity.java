@@ -177,7 +177,7 @@ public class SettingsActivity extends Activity {
             @Override
             public void onClick(View v) {
                 try {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/mafik/echo")));
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/shkarlsson/good-echo")));
                 } catch (android.content.ActivityNotFoundException anfe) {
                     // ignore
                 }
