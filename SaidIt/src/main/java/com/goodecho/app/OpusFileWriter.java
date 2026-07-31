@@ -9,7 +9,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.zip.CRC32;
 
 public class OpusFileWriter implements Closeable {
 
@@ -205,7 +204,7 @@ public class OpusFileWriter implements Closeable {
 
         page[0] = 'O'; page[1] = 'g'; page[2] = 'g'; page[3] = 'S';
         page[4] = 0;
-        page[5] = (byte) ((bos ? 1 : 0) | (eos ? 2 : 0));
+        page[5] = (byte) ((bos ? 0x02 : 0) | (eos ? 0x04 : 0));
         writeLE64(page, 6, granule);
         writeLE32(page, 14, 1);
         writeLE32(page, 18, seq);
@@ -220,9 +219,7 @@ public class OpusFileWriter implements Closeable {
 
         System.arraycopy(data, 0, page, 27 + segCount, dataLen);
 
-        CRC32 crc = new CRC32();
-        crc.update(page);
-        int crcVal = (int) crc.getValue();
+        int crcVal = oggCrc32(page, 0, page.length);
         page[22] = (byte) (crcVal & 0xFF);
         page[23] = (byte) ((crcVal >> 8) & 0xFF);
         page[24] = (byte) ((crcVal >> 16) & 0xFF);
@@ -259,5 +256,31 @@ public class OpusFileWriter implements Closeable {
     private static void writeLE16(java.io.ByteArrayOutputStream baos, int value) {
         baos.write(value & 0xFF);
         baos.write((value >> 8) & 0xFF);
+    }
+
+    private static final int[] CRC_TABLE = buildCrcTable();
+
+    private static int[] buildCrcTable() {
+        int[] table = new int[256];
+        for (int i = 0; i < 256; i++) {
+            int r = i << 24;
+            for (int k = 0; k < 8; k++) {
+                if ((r & 0x80000000) != 0) {
+                    r = (r << 1) ^ 0x04c11db7;
+                } else {
+                    r <<= 1;
+                }
+            }
+            table[i] = r;
+        }
+        return table;
+    }
+
+    private static int oggCrc32(byte[] data, int offset, int length) {
+        int crc = 0;
+        for (int i = 0; i < length; i++) {
+            crc = (crc << 8) ^ CRC_TABLE[((crc >>> 24) ^ (data[offset + i] & 0xff)) & 0xff];
+        }
+        return crc;
     }
 }
